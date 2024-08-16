@@ -1,18 +1,15 @@
 package com.complitech.demo.controller;
 
 import com.complitech.demo.entity.User;
-import com.complitech.demo.entity.UserAction;
 import com.complitech.demo.entity.UserDTO;
 import com.complitech.demo.exception.UserNotFoundException;
 import com.complitech.demo.service.UserService;
 import com.complitech.demo.service.UserServiceClient;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Objects;
 
 @Slf4j
 @RestController
@@ -20,14 +17,12 @@ import java.util.Objects;
 public class UserController {
 
     private final UserService userService;
-    private final SimpMessagingTemplate messagingTemplate;
+
     private final UserServiceClient userServiceClient;
 
     public UserController(UserService userService,
-                          SimpMessagingTemplate messagingTemplate,
                           UserServiceClient userServiceClient) {
         this.userService = userService;
-        this.messagingTemplate = messagingTemplate;
         this.userServiceClient = userServiceClient;
     }
 
@@ -60,13 +55,8 @@ public class UserController {
     @GetMapping("/all")
     public List<User> getAllUsers() {
         List<User> users = userService.getAllUsers();
-        users.stream()
-                .filter(Objects::nonNull)
-                .forEach(user ->
-                        messagingTemplate.convertAndSend("/app/chat",
-                                new UserAction(user, "use request GET /users"))
-                );
-        return userService.getAllUsers();
+        userService.sendNotificationToUsers(users);
+        return users;
     }
 
     @PostMapping("/test")

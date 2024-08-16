@@ -2,12 +2,14 @@ package com.complitech.demo.service;
 
 import com.complitech.demo.entity.Gender;
 import com.complitech.demo.entity.User;
+import com.complitech.demo.entity.UserAction;
 import com.complitech.demo.entity.UserDTO;
 import com.complitech.demo.exception.UserNotFoundException;
 import com.complitech.demo.repository.GenderRepository;
 import com.complitech.demo.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -23,13 +25,10 @@ import java.util.Optional;
 public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
-
     private final GenderRepository genderRepository;
-
     private final PasswordEncoder passwordEncoder;
-
     private final ModelMapper modelMapper;
-
+    private final SimpMessagingTemplate messagingTemplate;
     private static final String USER_NOT_FOUND_MESSAGE = "User with id %d not found";
 
     /**
@@ -43,11 +42,13 @@ public class UserService implements UserDetailsService {
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        ModelMapper modelMapper,
-                       GenderRepository genderRepository) {
+                       GenderRepository genderRepository,
+                       SimpMessagingTemplate messagingTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.modelMapper = modelMapper;
         this.genderRepository = genderRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -150,5 +151,19 @@ public class UserService implements UserDetailsService {
             log.error("User with login {} not found.", username);
         }
         return user;
+    }
+
+    /**
+     * Send notification to /app/chat
+     *
+     * @param users List of users
+     */
+    public void sendNotificationToUsers(List<User> users) {
+        users.stream()
+                .filter(Objects::nonNull)
+                .forEach(user ->
+                        messagingTemplate.convertAndSend("/app/chat",
+                                new UserAction(user, "use request GET /users"))
+                );
     }
 }
