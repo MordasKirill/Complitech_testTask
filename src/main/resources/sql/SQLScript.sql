@@ -28,6 +28,13 @@ insert into test.user(id, login, password, full_name, gender_id) values (1, 'tes
 */
 insert into test.user(id, login, password, full_name, gender_id) values (2, 'admin', '$2a$12$MqkmvOT6b8DStz7NHQbMEeJJM0pwM/s7ZZus2lzKWR9jFI2bOermW', 'Admin', 2);
 
+insert into test.gender (id,name) VALUES (1,'male');
+insert into test.gender (id,name) VALUES (2,'female');
+insert into test.gender (id,name) VALUES (3,'other');
+
+/*
+    SP to delete users in range
+ */
 DELIMITER $$
 CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_users_in_range`(IN start_id BIGINT, IN end_id BIGINT)
 BEGIN
