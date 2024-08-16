@@ -15,8 +15,9 @@ public class ShutdownScheduler {
 
     /**
      * End's execution of application if shutdownTime is after current date.
+     * Scheduled to be executed every 10 minutes
      */
-    @Scheduled(fixedRate = 6000)
+    @Scheduled(fixedRate = 600000)
     public void checkShutdown() {
         if (shutdownTime != null && LocalDateTime.now().isAfter(shutdownTime)) {
             System.exit(0);
