@@ -2,7 +2,7 @@ package com.complitech.demo.controller;
 
 import com.complitech.demo.entity.User;
 import com.complitech.demo.entity.UserDTO;
-import com.complitech.demo.exception.UserNotFoundException;
+import com.complitech.demo.exception.UserException;
 import com.complitech.demo.service.UserService;
 import com.complitech.demo.service.UserServiceClient;
 import jakarta.validation.Valid;
@@ -27,18 +27,18 @@ public class UserController {
     }
 
     @PostMapping()
-    public User createUser(@Valid @RequestBody UserDTO userDTO) {
+    public User createUser(@Valid @RequestBody UserDTO userDTO) throws UserException {
         return userService.createUser(userDTO);
     }
 
     @PutMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) throws UserNotFoundException {
+    public User updateUser(@PathVariable Long id, @Valid @RequestBody UserDTO userDTO) throws UserException {
         userDTO.setId(id);
         return userService.updateUser(id, userDTO);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) throws UserNotFoundException {
+    public void deleteUser(@PathVariable Long id) throws UserException {
         userService.deleteUser(id);
     }
 
@@ -48,7 +48,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public User getUser(@PathVariable Long id) throws UserNotFoundException {
+    public User getUser(@PathVariable Long id) throws UserException {
         return userService.getUser(id);
     }
 

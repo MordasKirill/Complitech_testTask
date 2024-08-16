@@ -4,7 +4,7 @@ import com.complitech.demo.entity.Gender;
 import com.complitech.demo.entity.User;
 import com.complitech.demo.entity.UserAction;
 import com.complitech.demo.entity.UserDTO;
-import com.complitech.demo.exception.UserNotFoundException;
+import com.complitech.demo.exception.UserException;
 import com.complitech.demo.repository.GenderRepository;
 import com.complitech.demo.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -57,12 +57,8 @@ public class UserService implements UserDetailsService {
      * @param userDTO user DTO object
      * @return created user in the system, having assigned id
      */
-    public User createUser(UserDTO userDTO) {
-        Optional<Gender> gender = genderRepository.findById((long) userDTO.getGender().getId());
-        if (gender.isEmpty()) {
-            log.error("Gender with id {} not found.", userDTO.getGender().getId());
-            throw new IllegalArgumentException("Gender with id " + userDTO.getGender().getId() + " not found.");
-        }
+    public User createUser(UserDTO userDTO) throws UserException {
+        validateUserGender(userDTO.getGender().getId());
         User user = modelMapper.map(userDTO, User.class);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         return userRepository.save(user);
@@ -74,15 +70,15 @@ public class UserService implements UserDetailsService {
      * @param id id of user to be updated
      * @param userDTO used object containing updates
      * @return updated user object
-     * @throws UserNotFoundException if there is no such user in the system
+     * @throws UserException if there is no such user in the system
      */
-    public User updateUser(Long id, UserDTO userDTO) throws UserNotFoundException {
+    public User updateUser(Long id, UserDTO userDTO) throws UserException {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isEmpty()) {
             log.error("User with id {} not found.", userDTO.getId());
-            throw new UserNotFoundException(String.format(USER_NOT_FOUND_MESSAGE, userDTO.getId()));
+            throw new UserException(String.format(USER_NOT_FOUND_MESSAGE, userDTO.getId()));
         }
-
+        validateUserGender(userDTO.getGender().getId());
         User user = optionalUser.get();
         modelMapper.map(userDTO, user);
 
@@ -94,15 +90,28 @@ public class UserService implements UserDetailsService {
     }
 
     /**
+     * Validates if provided gender id exists in the system
+     *
+     * @param genderId gender id
+     */
+    private void validateUserGender(long genderId) throws UserException {
+        Optional<Gender> gender = genderRepository.findById(genderId);
+        if (gender.isEmpty()) {
+            log.error("Gender with id {} not found.", genderId);
+            throw new UserException("Gender with id " + genderId + " not found.");
+        }
+    }
+
+    /**
      * Delete single user from th system
      *
      * @param id user id to be deleted
-     * @throws UserNotFoundException is there is no such user id in the system
+     * @throws UserException is there is no such user id in the system
      */
-    public void deleteUser(Long id) throws UserNotFoundException {
+    public void deleteUser(Long id) throws UserException {
         if (!userRepository.existsById(id)) {
             log.error("User with id {} not found, cannot delete.", id);
-            throw new UserNotFoundException(String.format(USER_NOT_FOUND_MESSAGE, id));
+            throw new UserException(String.format(USER_NOT_FOUND_MESSAGE, id));
         }
         userRepository.deleteById(id);
         log.info("Users with id:{} deleted.", id);
@@ -124,13 +133,13 @@ public class UserService implements UserDetailsService {
      *
      * @param id user id to be received
      * @return user object
-     * @throws UserNotFoundException in case user not found in the system
+     * @throws UserException in case user not found in the system
      */
-    public User getUser(Long id) throws UserNotFoundException {
+    public User getUser(Long id) throws UserException {
         Optional<User> optionalUser = userRepository.findById(id);
         if (optionalUser.isEmpty()) {
             log.error("User with id {} not found.", id);
-            throw new UserNotFoundException(String.format(USER_NOT_FOUND_MESSAGE, id));
+            throw new UserException(String.format(USER_NOT_FOUND_MESSAGE, id));
         }
         return optionalUser.get();
     }
